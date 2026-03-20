@@ -31,6 +31,7 @@ const Index = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stops));
   }, [stops]);
 
+  const activeStop = stops.find((s) => s.status === "active");
   const hasPending = stops.some((s) => s.status === "pending");
   const hasCompleted = stops.some((s) => s.status === "completed");
   const allDone = stops.length > 0 && !activeStop && !hasPending;
