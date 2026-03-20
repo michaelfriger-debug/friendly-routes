@@ -270,7 +270,12 @@ const Index = () => {
         />
 
         {/* Completed */}
-        {hasCompleted && <CompletedList stops={stops} onReturn={handleReturn} />}
+        <CompletedList
+          stops={stops}
+          onReturn={handleReturn}
+          onDeleteCompleted={() => setStops((prev) => prev.filter((s) => s.status !== "completed"))}
+          onRestoreCompleted={(restored) => setStops((prev) => [...prev, ...restored])}
+        />
       </div>
     </div>
   );
