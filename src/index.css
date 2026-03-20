@@ -72,16 +72,22 @@
     @apply bg-card rounded-xl shadow-sm border border-border p-4;
   }
 
-  .btn-deliver {
+  .btn-deliver,
+  .btn-primary,
+  .btn-success,
+  .btn-outline {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-200;
   }
 
-  .btn-deliver:active {
+  .btn-deliver:active,
+  .btn-primary:active,
+  .btn-success:active,
+  .btn-outline:active {
     transform: scale(0.97);
   }
 
   .btn-primary {
-    @apply btn-deliver bg-primary text-primary-foreground shadow-md;
+    @apply bg-primary text-primary-foreground shadow-md;
   }
 
   .btn-primary:hover {
@@ -89,7 +95,7 @@
   }
 
   .btn-success {
-    @apply btn-deliver bg-secondary text-secondary-foreground shadow-md;
+    @apply bg-secondary text-secondary-foreground shadow-md;
   }
 
   .btn-success:hover {
@@ -97,7 +103,7 @@
   }
 
   .btn-outline {
-    @apply btn-deliver border-2 border-border bg-card text-foreground;
+    @apply border-2 border-border bg-card text-foreground;
   }
 
   .btn-outline:hover {
