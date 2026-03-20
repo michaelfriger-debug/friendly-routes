@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import type { DeliveryStop } from "@/types/delivery";
-import MapPlaceholder from "@/components/delivery/MapPlaceholder";
+import type { DeliveryStop, PlaceDetails } from "@/types/delivery";
 import AddressInput from "@/components/delivery/AddressInput";
 import ActiveDelivery from "@/components/delivery/ActiveDelivery";
 import DeliveryList from "@/components/delivery/DeliveryList";
@@ -69,13 +68,14 @@ const Index = () => {
     );
   }, []);
 
-  const handleAdd = useCallback((address: string) => {
+  const handleAdd = useCallback((address: string, details?: PlaceDetails) => {
     setStops((prev) => {
       const newStop: DeliveryStop = {
         id: String(nextId++),
-        address,
-        lat: null,
-        lng: null,
+        address: details?.formattedAddress || address,
+        formattedAddress: details?.formattedAddress,
+        lat: details?.lat ?? null,
+        lng: details?.lng ?? null,
         status: "pending",
       };
       return activateNext([...prev, newStop]);
@@ -119,8 +119,6 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Map */}
-      <MapPlaceholder />
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 mt-4 space-y-4">
