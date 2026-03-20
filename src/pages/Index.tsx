@@ -68,13 +68,14 @@ const Index = () => {
     );
   }, []);
 
-  const handleAdd = useCallback((address: string) => {
+  const handleAdd = useCallback((address: string, details?: PlaceDetails) => {
     setStops((prev) => {
       const newStop: DeliveryStop = {
         id: String(nextId++),
-        address,
-        lat: null,
-        lng: null,
+        address: details?.formattedAddress || address,
+        formattedAddress: details?.formattedAddress,
+        lat: details?.lat ?? null,
+        lng: details?.lng ?? null,
         status: "pending",
       };
       return activateNext([...prev, newStop]);
