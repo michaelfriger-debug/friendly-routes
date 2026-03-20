@@ -118,8 +118,6 @@ const Index = () => {
         </div>
       </header>
 
-      {/* Map */}
-      <MapPlaceholder />
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 mt-4 space-y-4">
