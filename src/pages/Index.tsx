@@ -5,15 +5,23 @@ import AddressInput from "@/components/delivery/AddressInput";
 import ActiveDelivery from "@/components/delivery/ActiveDelivery";
 import DeliveryList from "@/components/delivery/DeliveryList";
 import CompletedList from "@/components/delivery/CompletedList";
+import RouteConfigModal, { type RouteConfig } from "@/components/delivery/RouteConfigModal";
+import RouteSummary from "@/components/delivery/RouteSummary";
 
 const STORAGE_KEY = "michael-delivery-stops";
+const ROUTE_CONFIG_KEY = "michael-route-config";
+
+const DEFAULT_ROUTE_CONFIG: RouteConfig = {
+  startType: "gps",
+  startAddress: "",
+  endAddress: "",
+};
 
 function loadStops(): DeliveryStop[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as DeliveryStop[];
-      // Restore nextId to avoid collisions
       const maxId = parsed.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0);
       nextId = maxId + 1;
       return parsed;
@@ -22,14 +30,27 @@ function loadStops(): DeliveryStop[] {
   return [];
 }
 
+function loadRouteConfig(): RouteConfig {
+  try {
+    const raw = localStorage.getItem(ROUTE_CONFIG_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return DEFAULT_ROUTE_CONFIG;
+}
+
 let nextId = 1;
 
 const Index = () => {
   const [stops, setStops] = useState<DeliveryStop[]>(loadStops);
+  const [routeConfig, setRouteConfig] = useState<RouteConfig>(loadRouteConfig);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(stops));
   }, [stops]);
+
+  useEffect(() => {
+    localStorage.setItem(ROUTE_CONFIG_KEY, JSON.stringify(routeConfig));
+  }, [routeConfig]);
 
   const activeStop = stops.find((s) => s.status === "active");
   const hasPending = stops.some((s) => s.status === "pending");
@@ -78,7 +99,6 @@ const Index = () => {
 
   const handleReturn = useCallback((id: string) => {
     setStops((prev) => {
-      // Move returned item to top, set pending, deactivate current active
       const item = prev.find((s) => s.id === id);
       if (!item) return prev;
 
@@ -91,7 +111,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-card shadow-sm sticky top-0 z-20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
@@ -104,14 +124,17 @@ const Index = () => {
 
       {/* Content */}
       <div className="max-w-lg mx-auto px-4 mt-4 space-y-4">
-        {/* Route config label */}
-        <p className="text-sm font-semibold text-muted-foreground">⚙️ הגדר מסלול</p>
+        {/* Route config */}
+        <RouteConfigModal config={routeConfig} onSave={setRouteConfig} />
+        <RouteSummary config={routeConfig} />
 
         {/* Address Input */}
         <AddressInput onAdd={handleAdd} />
 
-        {/* Active Delivery */}
-        {activeStop && <ActiveDelivery stop={activeStop} />}
+        {/* Active Delivery Hero */}
+        {activeStop && (
+          <ActiveDelivery stop={activeStop} onComplete={handleComplete} />
+        )}
 
         {/* All done */}
         {allDone && (
