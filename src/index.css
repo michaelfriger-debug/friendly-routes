@@ -67,24 +67,40 @@
   }
 }
 
-@layer utilities {
+@layer components {
   .delivery-card {
     @apply bg-card rounded-xl shadow-sm border border-border p-4;
   }
 
   .btn-deliver {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-200 active:scale-[0.97];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-200;
+  }
+
+  .btn-deliver:active {
+    transform: scale(0.97);
   }
 
   .btn-primary {
-    @apply btn-deliver bg-primary text-primary-foreground shadow-md hover:shadow-lg;
+    @apply btn-deliver bg-primary text-primary-foreground shadow-md;
+  }
+
+  .btn-primary:hover {
+    @apply shadow-lg;
   }
 
   .btn-success {
-    @apply btn-deliver bg-secondary text-secondary-foreground shadow-md hover:shadow-lg;
+    @apply btn-deliver bg-secondary text-secondary-foreground shadow-md;
+  }
+
+  .btn-success:hover {
+    @apply shadow-lg;
   }
 
   .btn-outline {
-    @apply btn-deliver border-2 border-border bg-card text-foreground hover:bg-muted;
+    @apply btn-deliver border-2 border-border bg-card text-foreground;
+  }
+
+  .btn-outline:hover {
+    @apply bg-muted;
   }
 }
