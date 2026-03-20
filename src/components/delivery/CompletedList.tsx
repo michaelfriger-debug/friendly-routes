@@ -98,8 +98,9 @@ const CompletedList = ({ stops, onReturn, onDeleteCompleted, onRestoreCompleted 
         {completed.map((stop, i) => (
           <div
             key={stop.id}
-            className="flex items-center justify-between rounded-2xl bg-emerald-50 dark:bg-emerald-950/20
-                       border border-emerald-200/60 dark:border-emerald-800/40
+            className="flex items-center justify-between rounded-2xl
+                       bg-[hsl(var(--success)/0.08)]
+                       border border-[hsl(var(--success)/0.25)]
                        px-4 py-3 animate-fade-in"
             style={{ animationDelay: `${i * 40}ms` }}
           >
