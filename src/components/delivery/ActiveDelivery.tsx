@@ -2,9 +2,10 @@ import type { DeliveryStop } from "@/types/delivery";
 
 interface ActiveDeliveryProps {
   stop: DeliveryStop;
+  onComplete: (id: string) => void;
 }
 
-const ActiveDelivery = ({ stop }: ActiveDeliveryProps) => {
+const ActiveDelivery = ({ stop, onComplete }: ActiveDeliveryProps) => {
   const wazeUrl = `https://waze.com/ul?q=${encodeURIComponent(stop.address)}&navigate=yes`;
 
   return (
@@ -14,14 +15,22 @@ const ActiveDelivery = ({ stop }: ActiveDeliveryProps) => {
         <span className="text-sm font-bold text-primary">משלוח פעיל</span>
       </div>
       <p className="text-lg font-semibold mb-4">{stop.address}</p>
-      <a
-        href={wazeUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary w-full text-center block"
-      >
-        🧭 נווט ב-Waze
-      </a>
+      <div className="flex gap-2">
+        <a
+          href={wazeUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn-primary flex-1 text-center"
+        >
+          🧭 נווט ב-Waze
+        </a>
+        <button
+          onClick={() => onComplete(stop.id)}
+          className="btn-success flex-1"
+        >
+          👍 סופק
+        </button>
+      </div>
     </div>
   );
 };
