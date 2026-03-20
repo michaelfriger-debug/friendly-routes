@@ -6,6 +6,8 @@ import DeliveryList from "@/components/delivery/DeliveryList";
 import CompletedList from "@/components/delivery/CompletedList";
 import RouteConfigModal, { type RouteConfig } from "@/components/delivery/RouteConfigModal";
 import RouteSummary from "@/components/delivery/RouteSummary";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "michael-delivery-stops";
 const ROUTE_CONFIG_KEY = "michael-route-config";

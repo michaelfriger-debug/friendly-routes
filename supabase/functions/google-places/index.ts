@@ -57,6 +57,29 @@ Deno.serve(async (req) => {
       });
     }
 
+    if (action === "geocode") {
+      const res = await fetch(
+        "https://maps.googleapis.com/maps/api/geocode/json?" +
+          new URLSearchParams({
+            address: input,
+            region: "IL",
+            language: "he",
+            key: GOOGLE_API_KEY,
+          })
+      );
+      const data = await res.json();
+      const result = data.results?.[0];
+      const loc = result?.geometry?.location;
+      return new Response(
+        JSON.stringify({
+          lat: loc?.lat ?? null,
+          lng: loc?.lng ?? null,
+          formattedAddress: result?.formatted_address ?? null,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(JSON.stringify({ error: "Invalid action" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
