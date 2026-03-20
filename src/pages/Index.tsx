@@ -228,13 +228,22 @@ const Index = () => {
 
         {/* Sort route button */}
         {hasPending && (
-          <button
-            onClick={handleSortRoute}
-            disabled={sorting}
-            className="btn-outline w-full text-sm"
-          >
-            {sorting ? "⏳ מסדר מסלול..." : "🗺️ סדר מסלול (רחוק → קרוב)"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleSortRoute("far-first")}
+              disabled={sorting}
+              className="btn-outline flex-1 text-sm"
+            >
+              {sorting ? "⏳..." : "🗺️ רחוק → קרוב"}
+            </button>
+            <button
+              onClick={() => handleSortRoute("near-first")}
+              disabled={sorting}
+              className="btn-outline flex-1 text-sm"
+            >
+              {sorting ? "⏳..." : "📍 קרוב → רחוק"}
+            </button>
+          </div>
         )}
 
         {/* Address Input */}
