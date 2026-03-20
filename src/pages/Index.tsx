@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import type { DeliveryStop } from "@/types/delivery";
-import MapPlaceholder from "@/components/delivery/MapPlaceholder";
+import type { DeliveryStop, PlaceDetails } from "@/types/delivery";
 import AddressInput from "@/components/delivery/AddressInput";
 import ActiveDelivery from "@/components/delivery/ActiveDelivery";
 import DeliveryList from "@/components/delivery/DeliveryList";
