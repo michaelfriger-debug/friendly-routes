@@ -41,6 +41,45 @@ function loadRouteConfig(): RouteConfig {
 
 let nextId = 1;
 
+/** Haversine distance in km */
+function haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const R = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const { data, error } = await supabase.functions.invoke("google-places", {
+      body: { action: "geocode", input: address },
+    });
+    if (error || !data?.lat || !data?.lng) return null;
+    return { lat: data.lat, lng: data.lng };
+  } catch {
+    return null;
+  }
+}
+
+async function getStartCoords(config: RouteConfig): Promise<{ lat: number; lng: number } | null> {
+  if (config.startType === "manual" && config.startAddress.trim()) {
+    return geocodeAddress(config.startAddress.trim());
+  }
+  // GPS
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) return resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { timeout: 8000 }
+    );
+  });
+}
+
 const Index = () => {
   const [stops, setStops] = useState<DeliveryStop[]>(loadStops);
   const [routeConfig, setRouteConfig] = useState<RouteConfig>(loadRouteConfig);
