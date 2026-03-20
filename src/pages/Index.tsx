@@ -224,6 +224,17 @@ const Index = () => {
         <RouteConfigModal config={routeConfig} onSave={setRouteConfig} />
         <RouteSummary config={routeConfig} />
 
+        {/* Sort route button */}
+        {hasPending && (
+          <button
+            onClick={handleSortRoute}
+            disabled={sorting}
+            className="btn-outline w-full text-sm"
+          >
+            {sorting ? "⏳ מסדר מסלול..." : "🗺️ סדר מסלול (רחוק → קרוב)"}
+          </button>
+        )}
+
         {/* Address Input */}
         <AddressInput onAdd={handleAdd} />
 
