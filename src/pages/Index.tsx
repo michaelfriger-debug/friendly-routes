@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { DeliveryStop } from "@/types/delivery";
 import MapPlaceholder from "@/components/delivery/MapPlaceholder";
 import AddressInput from "@/components/delivery/AddressInput";
@@ -6,10 +6,26 @@ import ActiveDelivery from "@/components/delivery/ActiveDelivery";
 import DeliveryList from "@/components/delivery/DeliveryList";
 import CompletedList from "@/components/delivery/CompletedList";
 
+const STORAGE_KEY = "michael-delivery-stops";
+
+function loadStops(): DeliveryStop[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as DeliveryStop[];
+      // Restore nextId to avoid collisions
+      const maxId = parsed.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0);
+      nextId = maxId + 1;
+      return parsed;
+    }
+  } catch {}
+  return [];
+}
+
 let nextId = 1;
 
 const Index = () => {
-  const [stops, setStops] = useState<DeliveryStop[]>([]);
+  const [stops, setStops] = useState<DeliveryStop[]>(loadStops);
 
   const activeStop = stops.find((s) => s.status === "active");
   const hasPending = stops.some((s) => s.status === "pending");
