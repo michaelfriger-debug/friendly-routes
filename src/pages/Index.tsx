@@ -153,7 +153,7 @@ const Index = () => {
     });
   }, []);
 
-  const handleSortRoute = useCallback(async () => {
+  const handleSortRoute = useCallback(async (direction: "far-first" | "near-first") => {
     const pendingStops = stops.filter((s) => s.status === "pending" || s.status === "active");
     if (pendingStops.length < 2) {
       toast.info("צריך לפחות 2 עצירות כדי לסדר מסלול");
@@ -169,7 +169,6 @@ const Index = () => {
         return;
       }
 
-      // Geocode stops that are missing coordinates
       const enriched = await Promise.all(
         stops.map(async (s) => {
           if (s.status === "completed") return s;
@@ -185,7 +184,6 @@ const Index = () => {
         (s) => ({ ...s, status: "pending" as const })
       );
 
-      // Sort: farthest first, no-coords at the end
       const withDist = active.map((s) => ({
         stop: s,
         dist: s.lat != null && s.lng != null ? haversine(start.lat, start.lng, s.lat, s.lng) : -1,
@@ -195,12 +193,16 @@ const Index = () => {
         if (a.dist === -1 && b.dist === -1) return 0;
         if (a.dist === -1) return 1;
         if (b.dist === -1) return -1;
-        return b.dist - a.dist; // farthest first
+        return direction === "far-first" ? b.dist - a.dist : a.dist - b.dist;
       });
 
       const sorted = [...withDist.map((w) => w.stop), ...completed];
       setStops(activateNext(sorted));
-      toast.success("המסלול סודר – מהרחוק לקרוב 🚚");
+      toast.success(
+        direction === "far-first"
+          ? "המסלול סודר – מהרחוק לקרוב 🚚"
+          : "המסלול סודר – מהקרוב לרחוק 🚚"
+      );
     } catch {
       toast.error("שגיאה בסידור המסלול");
     } finally {
@@ -226,13 +228,22 @@ const Index = () => {
 
         {/* Sort route button */}
         {hasPending && (
-          <button
-            onClick={handleSortRoute}
-            disabled={sorting}
-            className="btn-outline w-full text-sm"
-          >
-            {sorting ? "⏳ מסדר מסלול..." : "🗺️ סדר מסלול (רחוק → קרוב)"}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleSortRoute("far-first")}
+              disabled={sorting}
+              className="btn-outline flex-1 text-sm"
+            >
+              {sorting ? "⏳..." : "🗺️ רחוק → קרוב"}
+            </button>
+            <button
+              onClick={() => handleSortRoute("near-first")}
+              disabled={sorting}
+              className="btn-outline flex-1 text-sm"
+            >
+              {sorting ? "⏳..." : "📍 קרוב → רחוק"}
+            </button>
+          </div>
         )}
 
         {/* Address Input */}
