@@ -132,6 +132,8 @@ const Index = () => {
     });
   }, [activateNext]);
 
+  const [sorting, setSorting] = useState(false);
+
   const handleEdit = useCallback((id: string, newAddress: string) => {
     setStops((prev) =>
       prev.map((s) => (s.id === id ? { ...s, address: newAddress } : s))
@@ -150,6 +152,61 @@ const Index = () => {
       return [{ ...item, status: "active" as const }, ...rest];
     });
   }, []);
+
+  const handleSortRoute = useCallback(async () => {
+    const pendingStops = stops.filter((s) => s.status === "pending" || s.status === "active");
+    if (pendingStops.length < 2) {
+      toast.info("צריך לפחות 2 עצירות כדי לסדר מסלול");
+      return;
+    }
+
+    setSorting(true);
+    try {
+      const start = await getStartCoords(routeConfig);
+      if (!start) {
+        toast.error("לא ניתן לקבוע נקודת התחלה – בדוק GPS או כתובת ידנית");
+        setSorting(false);
+        return;
+      }
+
+      // Geocode stops that are missing coordinates
+      const enriched = await Promise.all(
+        stops.map(async (s) => {
+          if (s.status === "completed") return s;
+          if (s.lat != null && s.lng != null) return s;
+          const coords = await geocodeAddress(s.address);
+          if (coords) return { ...s, lat: coords.lat, lng: coords.lng };
+          return s;
+        })
+      );
+
+      const completed = enriched.filter((s) => s.status === "completed");
+      const active = enriched.filter((s) => s.status === "pending" || s.status === "active").map(
+        (s) => ({ ...s, status: "pending" as const })
+      );
+
+      // Sort: farthest first, no-coords at the end
+      const withDist = active.map((s) => ({
+        stop: s,
+        dist: s.lat != null && s.lng != null ? haversine(start.lat, start.lng, s.lat, s.lng) : -1,
+      }));
+
+      withDist.sort((a, b) => {
+        if (a.dist === -1 && b.dist === -1) return 0;
+        if (a.dist === -1) return 1;
+        if (b.dist === -1) return -1;
+        return b.dist - a.dist; // farthest first
+      });
+
+      const sorted = [...withDist.map((w) => w.stop), ...completed];
+      setStops(activateNext(sorted));
+      toast.success("המסלול סודר – מהרחוק לקרוב 🚚");
+    } catch {
+      toast.error("שגיאה בסידור המסלול");
+    } finally {
+      setSorting(false);
+    }
+  }, [stops, routeConfig, activateNext]);
 
   return (
     <div className="min-h-screen bg-background pb-24">
