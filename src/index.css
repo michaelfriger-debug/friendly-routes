@@ -8,40 +8,28 @@
   :root {
     --background: 210 20% 96%;
     --foreground: 220 20% 14%;
-
     --card: 0 0% 100%;
     --card-foreground: 220 20% 14%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 220 20% 14%;
-
     --primary: 210 90% 50%;
     --primary-foreground: 0 0% 100%;
-
     --secondary: 145 60% 42%;
     --secondary-foreground: 0 0% 100%;
-
     --muted: 210 15% 90%;
     --muted-foreground: 220 10% 46%;
-
     --accent: 35 95% 55%;
     --accent-foreground: 0 0% 100%;
-
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
-
     --border: 210 15% 88%;
     --input: 210 15% 88%;
     --ring: 210 90% 50%;
-
     --radius: 0.75rem;
-
     --success: 145 60% 42%;
     --success-foreground: 0 0% 100%;
-
     --warning: 35 95% 55%;
     --warning-foreground: 0 0% 100%;
-
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
@@ -51,32 +39,60 @@
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
   * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
+    box-sizing: border-box;
+    border-color: hsl(var(--border));
   }
 
   html {
     direction: rtl;
   }
+
+  body {
+    margin: 0;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-family: 'Heebo', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
 }
 
 @layer components {
   .delivery-card {
-    @apply bg-card rounded-xl shadow-sm border border-border p-4;
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    border: 1px solid hsl(var(--border));
+    border-radius: 1rem;
+    box-shadow: 0 10px 24px -18px hsl(var(--foreground) / 0.28);
+    padding: 1rem;
   }
 
   .btn-deliver,
   .btn-primary,
   .btn-success,
   .btn-outline {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-base font-semibold transition-all duration-200;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
   }
 
   .btn-deliver:active,
@@ -87,26 +103,32 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground shadow-md;
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    box-shadow: 0 12px 22px -14px hsl(var(--primary) / 0.8);
   }
 
   .btn-primary:hover {
-    @apply shadow-lg;
+    box-shadow: 0 16px 28px -14px hsl(var(--primary) / 0.9);
   }
 
   .btn-success {
-    @apply bg-secondary text-secondary-foreground shadow-md;
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    box-shadow: 0 12px 22px -14px hsl(var(--secondary) / 0.8);
   }
 
   .btn-success:hover {
-    @apply shadow-lg;
+    box-shadow: 0 16px 28px -14px hsl(var(--secondary) / 0.9);
   }
 
   .btn-outline {
-    @apply border-2 border-border bg-card text-foreground;
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
+    border: 2px solid hsl(var(--border));
   }
 
   .btn-outline:hover {
-    @apply bg-muted;
+    background-color: hsl(var(--muted));
   }
 }
