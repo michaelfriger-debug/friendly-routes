@@ -27,7 +27,10 @@ let nextId = 1;
 const Index = () => {
   const [stops, setStops] = useState<DeliveryStop[]>(loadStops);
 
-  const activeStop = stops.find((s) => s.status === "active");
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stops));
+  }, [stops]);
+
   const hasPending = stops.some((s) => s.status === "pending");
   const hasCompleted = stops.some((s) => s.status === "completed");
   const allDone = stops.length > 0 && !activeStop && !hasPending;
