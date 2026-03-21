@@ -110,17 +110,30 @@ const Index = () => {
   }, []);
 
   const handleAdd = useCallback((address: string, details?: PlaceDetails) => {
-    setStops((prev) => {
-      const newStop: DeliveryStop = {
-        id: String(nextId++),
-        address: details?.formattedAddress || address,
-        formattedAddress: details?.formattedAddress,
-        lat: details?.lat ?? null,
-        lng: details?.lng ?? null,
-        status: "pending",
-      };
-      return activateNext([...prev, newStop]);
-    });
+    const stopId = String(nextId++);
+    const newStop: DeliveryStop = {
+      id: stopId,
+      address: details?.formattedAddress || address,
+      formattedAddress: details?.formattedAddress,
+      lat: details?.lat ?? null,
+      lng: details?.lng ?? null,
+      status: "pending",
+    };
+
+    setStops((prev) => activateNext([...prev, newStop]));
+
+    // Auto-geocode if no coordinates
+    if (newStop.lat == null || newStop.lng == null) {
+      geocodeAddress(newStop.address).then((coords) => {
+        if (coords) {
+          setStops((prev) =>
+            prev.map((s) =>
+              s.id === stopId ? { ...s, lat: coords.lat, lng: coords.lng } : s
+            )
+          );
+        }
+      });
+    }
   }, [activateNext]);
 
   const handleComplete = useCallback((id: string) => {
