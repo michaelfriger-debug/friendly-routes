@@ -214,8 +214,14 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
       <header className="bg-card shadow-sm sticky top-0 z-20">
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-bold">🚚 Michael Delivery</h1>
+          <button
+            onClick={() => { localStorage.removeItem("isLoggedIn"); window.location.href = "/login"; }}
+            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+          >
+            התנתק
+          </button>
         </div>
       </header>
 
