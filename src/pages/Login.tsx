@@ -3,10 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Eye, EyeOff } from "lucide-react";
+
+const VALID_USERS = [
+  { username: "Shlomi", password: "Shlomi" },
+  { username: "Admin", password: "Admin" },
+];
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -22,7 +29,10 @@ const Login = () => {
   }, []);
 
   const handleLogin = () => {
-    if (username === "Shlomi" && password === "Shlomi") {
+    const valid = VALID_USERS.some(
+      (u) => u.username === username && u.password === password
+    );
+    if (valid) {
       localStorage.setItem("isLoggedIn", "true");
       if (rememberMe) {
         localStorage.setItem("savedCredentials", JSON.stringify({ username, password }));
@@ -50,14 +60,24 @@ const Login = () => {
             onChange={(e) => { setUsername(e.target.value); setError(""); }}
             dir="rtl"
           />
-          <Input
-            type="password"
-            placeholder="סיסמה"
-            value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(""); }}
-            dir="rtl"
-            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-          />
+          <div className="relative">
+            <Input
+              type={showPassword ? "text" : "password"}
+              placeholder="סיסמה"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(""); }}
+              dir="rtl"
+              className="pr-10"
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
           <div className="flex items-center gap-2 justify-end" dir="rtl">
             <Checkbox
               id="remember"
