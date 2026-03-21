@@ -1,17 +1,34 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Login = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  useEffect(() => {
+    const saved = localStorage.getItem("savedCredentials");
+    if (saved) {
+      const { username: u, password: p } = JSON.parse(saved);
+      setUsername(u);
+      setPassword(p);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleLogin = () => {
-    if (username === "admin" && password === "1234") {
+    if (username === "Shlomi" && password === "Shlomi") {
       localStorage.setItem("isLoggedIn", "true");
+      if (rememberMe) {
+        localStorage.setItem("savedCredentials", JSON.stringify({ username, password }));
+      } else {
+        localStorage.removeItem("savedCredentials");
+      }
       navigate("/");
     } else {
       setError("שם משתמש או סיסמה שגויים");
@@ -41,6 +58,16 @@ const Login = () => {
             dir="rtl"
             onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
+          <div className="flex items-center gap-2 justify-end" dir="rtl">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(checked === true)}
+            />
+            <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+              זכור אותי
+            </label>
+          </div>
           {error && <p className="text-destructive text-sm text-center">{error}</p>}
           <Button className="w-full" onClick={handleLogin}>התחבר</Button>
         </div>
