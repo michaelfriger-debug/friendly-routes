@@ -94,21 +94,21 @@ const CompletedList = ({ stops, onReturn, onDeleteCompleted, onRestoreCompleted 
       </h3>
 
       {/* Completed items */}
-      <div className={`space-y-2 transition-opacity duration-300 ${fadingOut ? "opacity-0" : "opacity-100"}`}>
+      <div className={`space-y-3 transition-opacity duration-300 ${fadingOut ? "opacity-0" : "opacity-100"}`}>
         {completed.map((stop, i) => (
           <div
             key={stop.id}
             className="flex items-center justify-between rounded-2xl
                        bg-[hsl(var(--success)/0.08)]
                        border border-[hsl(var(--success)/0.25)]
-                       px-4 py-3 animate-fade-in"
+                       px-4 py-4 animate-fade-in"
             style={{ animationDelay: `${i * 40}ms` }}
           >
-            <span className="font-medium text-sm text-foreground">👍 {stop.address}</span>
+            <span className="font-semibold text-foreground leading-relaxed" style={{ fontSize: '1.125rem' }}>👍 {stop.address}</span>
             <button
               onClick={() => onReturn(stop.id)}
               className="rounded-xl bg-card border border-border/60 px-3 py-1.5
-                         text-xs font-semibold text-muted-foreground
+                         text-xs font-semibold text-muted-foreground shrink-0 mr-3
                          hover:bg-muted/60 active:scale-[0.95] transition-all duration-150"
             >
               ↩️ החזר
