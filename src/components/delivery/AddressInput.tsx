@@ -82,14 +82,15 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
 
   const handleSelect = useCallback(async (suggestion: PlaceSuggestion) => {
     setShowDropdown(false);
-    setValue(suggestion.fullText);
+    const displayText = suggestion.mainText || suggestion.fullText;
+    setValue(displayText);
     setLoading(true);
 
     const details = await fetchPlaceDetails(suggestion.placeId);
-    const address = details?.formattedAddress || suggestion.fullText;
     setValue("");
     setSuggestions([]);
-    onAdd(address, details ?? undefined);
+    // Pass the Hebrew display text as the address, details only for coords
+    onAdd(displayText, details ?? undefined);
     setLoading(false);
   }, [onAdd]);
 
