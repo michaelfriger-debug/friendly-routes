@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import type { DeliveryStop } from "@/types/delivery";
 import { toast } from "sonner";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronDown } from "lucide-react";
 
 interface CompletedListProps {
   stops: DeliveryStop[];
@@ -9,40 +15,61 @@ interface CompletedListProps {
   onRestoreCompleted: (restored: DeliveryStop[]) => void;
 }
 
+function formatDate(iso?: string): string {
+  if (!iso) return "ללא תאריך";
+  const d = new Date(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
+function groupByDate(stops: DeliveryStop[]): Map<string, DeliveryStop[]> {
+  const groups = new Map<string, DeliveryStop[]>();
+  for (const stop of stops) {
+    const key = formatDate(stop.completedAt);
+    const arr = groups.get(key) || [];
+    arr.push(stop);
+    groups.set(key, arr);
+  }
+  return groups;
+}
+
 const CompletedList = ({ stops, onReturn, onDeleteCompleted, onRestoreCompleted }: CompletedListProps) => {
   const completed = stops.filter((s) => s.status === "completed");
   const [confirming, setConfirming] = useState(false);
   const [fadingOut, setFadingOut] = useState(false);
   const [deletedCache, setDeletedCache] = useState<DeliveryStop[] | null>(null);
+  const [openDates, setOpenDates] = useState<Set<string>>(new Set());
   const undoTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     };
   }, []);
 
-  const handleDeleteClick = () => {
-    setConfirming(true);
+  const toggleDate = (date: string) => {
+    setOpenDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
   };
+
+  const handleDeleteClick = () => setConfirming(true);
 
   const handleConfirmDelete = () => {
     setConfirming(false);
     setFadingOut(true);
-
     setTimeout(() => {
       const cached = [...completed];
       setDeletedCache(cached);
       setFadingOut(false);
       onDeleteCompleted();
-
       toast.success(`נמחקו ${cached.length} חבילות ✔`);
-
-      // Auto-clear undo after 5 seconds
-      undoTimerRef.current = setTimeout(() => {
-        setDeletedCache(null);
-      }, 5000);
+      undoTimerRef.current = setTimeout(() => setDeletedCache(null), 5000);
     }, 350);
   };
 
@@ -54,11 +81,9 @@ const CompletedList = ({ stops, onReturn, onDeleteCompleted, onRestoreCompleted 
     toast.info("החבילות שוחזרו ↩️");
   };
 
-  const handleCancelConfirm = () => {
-    setConfirming(false);
-  };
+  const handleCancelConfirm = () => setConfirming(false);
 
-  // Undo banner (shown after delete)
+  // Undo banner
   if (deletedCache && completed.length === 0) {
     return (
       <div className="mt-6 animate-fade-in">
@@ -84,37 +109,65 @@ const CompletedList = ({ stops, onReturn, onDeleteCompleted, onRestoreCompleted 
     );
   }
 
+  const dateGroups = groupByDate(completed);
+
   return (
     <div className="mt-8 animate-fade-in">
-      {/* Section divider + title */}
       <div className="border-t border-border/60 mb-4" />
       <h3 className="text-base font-semibold text-foreground px-1 mb-4">
         😊 חבילות שסופקו
         <span className="text-xs font-normal text-muted-foreground mr-2">({completed.length})</span>
       </h3>
 
-      {/* Completed items */}
       <div className={`space-y-3 transition-opacity duration-300 ${fadingOut ? "opacity-0" : "opacity-100"}`}>
-        {completed.map((stop, i) => (
-          <div
-            key={stop.id}
-            className="flex items-center justify-between rounded-2xl
-                       bg-[hsl(var(--success)/0.08)]
-                       border border-[hsl(var(--success)/0.25)]
-                       px-4 py-4 animate-fade-in"
-            style={{ animationDelay: `${i * 40}ms` }}
-          >
-            <span className="font-semibold text-foreground leading-relaxed" style={{ fontSize: '1.125rem' }}>👍 {stop.address}</span>
-            <button
-              onClick={() => onReturn(stop.id)}
-              className="rounded-xl bg-card border border-border/60 px-3 py-1.5
-                         text-xs font-semibold text-muted-foreground shrink-0 mr-3
-                         hover:bg-muted/60 active:scale-[0.95] transition-all duration-150"
-            >
-              ↩️ החזר
-            </button>
-          </div>
-        ))}
+        {Array.from(dateGroups.entries()).map(([date, items]) => {
+          const isOpen = openDates.has(date);
+          return (
+            <Collapsible key={date} open={isOpen} onOpenChange={() => toggleDate(date)}>
+              <div className="rounded-2xl border border-border/60 bg-card overflow-hidden">
+                <CollapsibleTrigger className="w-full flex items-center justify-between px-4 py-3.5
+                                               hover:bg-muted/40 transition-colors duration-150 cursor-pointer">
+                  <span className="font-semibold text-foreground text-sm">
+                    📅 {date}
+                    <span className="text-xs font-normal text-muted-foreground mr-2">
+                      ({items.length})
+                    </span>
+                  </span>
+                  <ChevronDown
+                    className={`h-4 w-4 text-muted-foreground shrink-0 transition-transform duration-200
+                                ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </CollapsibleTrigger>
+
+                <CollapsibleContent className="data-[state=open]:animate-accordion-down data-[state=closed]:animate-accordion-up">
+                  <div className="border-t border-border/40 px-3 py-2 space-y-2">
+                    {items.map((stop) => (
+                      <div
+                        key={stop.id}
+                        className="flex items-center justify-between rounded-xl
+                                   bg-[hsl(var(--success)/0.08)]
+                                   border border-[hsl(var(--success)/0.18)]
+                                   px-4 py-3"
+                      >
+                        <span className="font-semibold text-foreground leading-relaxed" style={{ fontSize: '1.125rem' }}>
+                          ✔ {stop.address}
+                        </span>
+                        <button
+                          onClick={() => onReturn(stop.id)}
+                          className="rounded-xl bg-card border border-border/60 px-3 py-1.5
+                                     text-xs font-semibold text-muted-foreground shrink-0 mr-3
+                                     hover:bg-muted/60 active:scale-[0.95] transition-all duration-150"
+                        >
+                          ↩️ החזר
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </CollapsibleContent>
+              </div>
+            </Collapsible>
+          );
+        })}
       </div>
 
       {/* Delete button / confirmation */}
