@@ -5,6 +5,7 @@ export interface DeliveryStop {
   lat: number | null;
   lng: number | null;
   status: "pending" | "active" | "completed";
+  completedAt?: string;
 }
 
 export interface PlaceSuggestion {

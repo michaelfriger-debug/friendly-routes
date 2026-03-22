@@ -139,7 +139,7 @@ const Index = () => {
   const handleComplete = useCallback((id: string) => {
     setStops((prev) => {
       const updated = prev.map((s) =>
-        s.id === id ? { ...s, status: "completed" as const } : s
+        s.id === id ? { ...s, status: "completed" as const, completedAt: new Date().toISOString() } : s
       );
       return activateNext(updated);
     });
