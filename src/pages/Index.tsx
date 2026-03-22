@@ -113,7 +113,7 @@ const Index = () => {
     const stopId = String(nextId++);
     const newStop: DeliveryStop = {
       id: stopId,
-      address: details?.formattedAddress || address,
+      address,
       formattedAddress: details?.formattedAddress,
       lat: details?.lat ?? null,
       lng: details?.lng ?? null,
