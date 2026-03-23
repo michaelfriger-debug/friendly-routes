@@ -154,6 +154,12 @@ const Index = () => {
     );
   }, []);
 
+  const handleCoordsResolved = useCallback((id: string, coords: { lat: number; lng: number }) => {
+    setStops((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, lat: coords.lat, lng: coords.lng } : s))
+    );
+  }, []);
+
   const handleReturn = useCallback((id: string) => {
     setStops((prev) => {
       const item = prev.find((s) => s.id === id);
@@ -271,7 +277,7 @@ const Index = () => {
 
         {/* Active Delivery Hero */}
         {activeStop && (
-          <ActiveDelivery stop={activeStop} onComplete={handleComplete} />
+          <ActiveDelivery stop={activeStop} onComplete={handleComplete} onCoordsResolved={handleCoordsResolved} />
         )}
 
         {/* All done */}
@@ -287,6 +293,7 @@ const Index = () => {
           stops={stops}
           onComplete={handleComplete}
           onEdit={handleEdit}
+          onCoordsResolved={handleCoordsResolved}
         />
 
         {/* Completed */}
