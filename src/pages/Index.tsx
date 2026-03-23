@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import type { DeliveryStop, PlaceDetails } from "@/types/delivery";
 import AddressInput from "@/components/delivery/AddressInput";
 import ActiveDelivery from "@/components/delivery/ActiveDelivery";
@@ -9,8 +9,8 @@ import RouteSummary from "@/components/delivery/RouteSummary";
 import ThemeToggle from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useDeliveries } from "@/hooks/use-deliveries";
 
-const STORAGE_KEY = "michael-delivery-stops";
 const ROUTE_CONFIG_KEY = "michael-route-config";
 
 const DEFAULT_ROUTE_CONFIG: RouteConfig = {
@@ -18,19 +18,6 @@ const DEFAULT_ROUTE_CONFIG: RouteConfig = {
   startAddress: "",
   endAddress: "",
 };
-
-function loadStops(): DeliveryStop[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw) as DeliveryStop[];
-      const maxId = parsed.reduce((max, s) => Math.max(max, Number(s.id) || 0), 0);
-      nextId = maxId + 1;
-      return parsed;
-    }
-  } catch {}
-  return [];
-}
 
 function loadRouteConfig(): RouteConfig {
   try {
@@ -56,7 +43,6 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
 
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
-    // Check cache first
     const { data: cacheData } = await supabase
       .from("geocode_cache")
       .select("lat, lng")
@@ -72,7 +58,6 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     });
     if (error || !data?.lat || !data?.lng) return null;
 
-    // Save to cache
     await supabase.from("geocode_cache").insert({
       address,
       lat: data.lat,
@@ -89,7 +74,6 @@ async function getStartCoords(config: RouteConfig): Promise<{ lat: number; lng: 
   if (config.startType === "manual" && config.startAddress.trim()) {
     return geocodeAddress(config.startAddress.trim());
   }
-  // GPS
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve(null);
     navigator.geolocation.getCurrentPosition(
@@ -101,20 +85,18 @@ async function getStartCoords(config: RouteConfig): Promise<{ lat: number; lng: 
 }
 
 const Index = () => {
-  const [stops, setStops] = useState<DeliveryStop[]>(loadStops);
+  const { stops, loaded, addStop, updateStop, replaceAll, deleteCompleted, restoreStops } = useDeliveries();
   const [routeConfig, setRouteConfig] = useState<RouteConfig>(loadRouteConfig);
+  const [sorting, setSorting] = useState(false);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(stops));
-  }, [stops]);
-
-  useEffect(() => {
-    localStorage.setItem(ROUTE_CONFIG_KEY, JSON.stringify(routeConfig));
-  }, [routeConfig]);
+  // Persist route config to localStorage
+  const handleRouteConfigSave = useCallback((config: RouteConfig) => {
+    setRouteConfig(config);
+    localStorage.setItem(ROUTE_CONFIG_KEY, JSON.stringify(config));
+  }, []);
 
   const activeStop = stops.find((s) => s.status === "active");
   const hasPending = stops.some((s) => s.status === "pending");
-  const hasCompleted = stops.some((s) => s.status === "completed");
   const allDone = stops.length > 0 && !activeStop && !hasPending;
 
   const activateNext = useCallback((currentStops: DeliveryStop[]): DeliveryStop[] => {
@@ -130,67 +112,59 @@ const Index = () => {
   }, []);
 
   const handleAdd = useCallback((address: string, details?: PlaceDetails) => {
-    const stopId = String(nextId++);
+    const stopId = crypto.randomUUID();
     const newStop: DeliveryStop = {
       id: stopId,
       address,
       formattedAddress: details?.formattedAddress,
       lat: details?.lat ?? null,
       lng: details?.lng ?? null,
-      status: "pending",
+      status: stops.some((s) => s.status === "active" || s.status === "pending") ? "pending" : "active",
     };
 
-    setStops((prev) => activateNext([...prev, newStop]));
+    addStop(newStop);
 
     // Auto-geocode if no coordinates
     if (newStop.lat == null || newStop.lng == null) {
       geocodeAddress(newStop.address).then((coords) => {
         if (coords) {
-          setStops((prev) =>
-            prev.map((s) =>
-              s.id === stopId ? { ...s, lat: coords.lat, lng: coords.lng } : s
-            )
-          );
+          updateStop(stopId, { lat: coords.lat, lng: coords.lng });
         }
       });
     }
-  }, [activateNext]);
+  }, [stops, addStop, updateStop]);
 
   const handleComplete = useCallback((id: string) => {
-    setStops((prev) => {
-      const updated = prev.map((s) =>
-        s.id === id ? { ...s, status: "completed" as const, completedAt: new Date().toISOString() } : s
-      );
-      return activateNext(updated);
-    });
-  }, [activateNext]);
+    const completedAt = new Date().toISOString();
+    updateStop(id, { status: "completed", completedAt });
 
-  const [sorting, setSorting] = useState(false);
+    // Activate next pending
+    const remaining = stops.filter((s) => s.id !== id && s.status === "pending");
+    if (remaining.length > 0 && !stops.some((s) => s.id !== id && s.status === "active")) {
+      updateStop(remaining[0].id, { status: "active" });
+    }
+  }, [stops, updateStop]);
 
   const handleEdit = useCallback((id: string, newAddress: string) => {
-    setStops((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, address: newAddress } : s))
-    );
-  }, []);
+    updateStop(id, { address: newAddress });
+  }, [updateStop]);
 
   const handleCoordsResolved = useCallback((id: string, coords: { lat: number; lng: number }) => {
-    setStops((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, lat: coords.lat, lng: coords.lng } : s))
-    );
-  }, []);
+    updateStop(id, { lat: coords.lat, lng: coords.lng });
+  }, [updateStop]);
 
   const handleReturn = useCallback((id: string) => {
-    setStops((prev) => {
-      const item = prev.find((s) => s.id === id);
-      if (!item) return prev;
-
-      const rest = prev.filter((s) => s.id !== id).map((s) =>
-        s.status === "active" ? { ...s, status: "pending" as const } : s
-      );
-
-      return [{ ...item, status: "active" as const }, ...rest];
+    // Set all active to pending, then set this one to active
+    const newStops = stops.map((s) => {
+      if (s.id === id) return { ...s, status: "active" as const, completedAt: undefined };
+      if (s.status === "active") return { ...s, status: "pending" as const };
+      return s;
     });
-  }, []);
+    // Move the returned item to the front
+    const returned = newStops.find((s) => s.id === id)!;
+    const rest = newStops.filter((s) => s.id !== id);
+    replaceAll([returned, ...rest]);
+  }, [stops, replaceAll]);
 
   const handleSortRoute = useCallback(async (direction: "far-first" | "near-first") => {
     const pendingStops = stops.filter((s) => s.status === "pending" || s.status === "active");
@@ -235,8 +209,8 @@ const Index = () => {
         return direction === "far-first" ? b.dist - a.dist : a.dist - b.dist;
       });
 
-      const sorted = [...withDist.map((w) => w.stop), ...completed];
-      setStops(activateNext(sorted));
+      const sorted = activateNext([...withDist.map((w) => w.stop), ...completed]);
+      replaceAll(sorted);
       toast.success(
         direction === "far-first"
           ? "המסלול סודר – מהרחוק לקרוב 🚚"
@@ -247,11 +221,18 @@ const Index = () => {
     } finally {
       setSorting(false);
     }
-  }, [stops, routeConfig, activateNext]);
+  }, [stops, routeConfig, activateNext, replaceAll]);
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">⏳ טוען משלוחים...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      {/* Header */}
       <header className="bg-card shadow-sm sticky top-0 z-20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-bold">🚚 Michael Delivery</h1>
@@ -264,14 +245,10 @@ const Index = () => {
         </div>
       </header>
 
-
-      {/* Content */}
       <div className="max-w-lg mx-auto px-4 mt-4 space-y-4">
-        {/* Route config */}
-        <RouteConfigModal config={routeConfig} onSave={setRouteConfig} />
+        <RouteConfigModal config={routeConfig} onSave={handleRouteConfigSave} />
         <RouteSummary config={routeConfig} />
 
-        {/* Sort route button */}
         {hasPending && (
           <div className="flex gap-2">
             <button
@@ -291,15 +268,12 @@ const Index = () => {
           </div>
         )}
 
-        {/* Address Input */}
         <AddressInput onAdd={handleAdd} />
 
-        {/* Active Delivery Hero */}
         {activeStop && (
           <ActiveDelivery stop={activeStop} onComplete={handleComplete} onCoordsResolved={handleCoordsResolved} />
         )}
 
-        {/* All done */}
         {allDone && (
           <div className="delivery-card text-center py-8 animate-fade-in">
             <p className="text-2xl mb-2">🎉</p>
@@ -307,7 +281,6 @@ const Index = () => {
           </div>
         )}
 
-        {/* Pending list */}
         <DeliveryList
           stops={stops}
           onComplete={handleComplete}
@@ -315,12 +288,11 @@ const Index = () => {
           onCoordsResolved={handleCoordsResolved}
         />
 
-        {/* Completed */}
         <CompletedList
           stops={stops}
           onReturn={handleReturn}
-          onDeleteCompleted={() => setStops((prev) => prev.filter((s) => s.status !== "completed"))}
-          onRestoreCompleted={(restored) => setStops((prev) => [...prev, ...restored])}
+          onDeleteCompleted={deleteCompleted}
+          onRestoreCompleted={restoreStops}
         />
         <ThemeToggle />
       </div>
