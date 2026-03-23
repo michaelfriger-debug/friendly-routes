@@ -14,7 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      geocode_cache: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          lat: number
+          lng: number
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          lat: number
+          lng: number
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          lat?: number
+          lng?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
