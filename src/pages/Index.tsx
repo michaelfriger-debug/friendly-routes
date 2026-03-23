@@ -277,7 +277,7 @@ const Index = () => {
 
         {/* Active Delivery Hero */}
         {activeStop && (
-          <ActiveDelivery stop={activeStop} onComplete={handleComplete} />
+          <ActiveDelivery stop={activeStop} onComplete={handleComplete} onCoordsResolved={handleCoordsResolved} />
         )}
 
         {/* All done */}
