@@ -293,6 +293,7 @@ const Index = () => {
           stops={stops}
           onComplete={handleComplete}
           onEdit={handleEdit}
+          onCoordsResolved={handleCoordsResolved}
         />
 
         {/* Completed */}
