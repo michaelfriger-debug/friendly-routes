@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      deliveries: {
+        Row: {
+          address: string
+          created_at: string
+          customer_name: string
+          id: string
+          phone: string
+          status: string
+        }
+        Insert: {
+          address?: string
+          created_at?: string
+          customer_name?: string
+          id?: string
+          phone?: string
+          status?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          customer_name?: string
+          id?: string
+          phone?: string
+          status?: string
+        }
+        Relationships: []
+      }
       geocode_cache: {
         Row: {
           address: string
