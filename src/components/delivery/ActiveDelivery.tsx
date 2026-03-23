@@ -1,12 +1,18 @@
 import type { DeliveryStop } from "@/types/delivery";
+import { handleNavigation } from "@/lib/navigation";
 
 interface ActiveDeliveryProps {
   stop: DeliveryStop;
   onComplete: (id: string) => void;
+  onCoordsResolved?: (id: string, coords: { lat: number; lng: number }) => void;
 }
 
-const ActiveDelivery = ({ stop, onComplete }: ActiveDeliveryProps) => {
-  const wazeUrl = `https://waze.com/ul?q=${encodeURIComponent(stop.address)}&navigate=yes`;
+const ActiveDelivery = ({ stop, onComplete, onCoordsResolved }: ActiveDeliveryProps) => {
+  const navigate = () => {
+    handleNavigation(stop.address, stop.lat, stop.lng, (coords) => {
+      onCoordsResolved?.(stop.id, coords);
+    });
+  };
 
   return (
     <div className="delivery-card border-2 border-primary/30 bg-primary/5 animate-slide-in">
@@ -16,18 +22,10 @@ const ActiveDelivery = ({ stop, onComplete }: ActiveDeliveryProps) => {
       </div>
       <p className="text-lg font-semibold mb-4">{stop.address}</p>
       <div className="flex gap-2">
-        <a
-          href={wazeUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn-primary flex-1 text-center"
-        >
+        <button onClick={navigate} className="btn-primary flex-1 text-center">
           🧭 נווט ב-Waze
-        </a>
-        <button
-          onClick={() => onComplete(stop.id)}
-          className="btn-success flex-1"
-        >
+        </button>
+        <button onClick={() => onComplete(stop.id)} className="btn-success flex-1">
           👍 סופק
         </button>
       </div>
