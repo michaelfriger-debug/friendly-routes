@@ -8,6 +8,19 @@ const corsHeaders = {
 
 const GOOGLE_API_KEY = Deno.env.get("GOOGLE_PLACES_API_KEY")!;
 
+async function fetchWithRetry(url: string, options: RequestInit, retries = 2): Promise<Response> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      return res;
+    } catch (err) {
+      if (i === retries) throw err;
+      await new Promise((r) => setTimeout(r, 200 * (i + 1)));
+    }
+  }
+  throw new Error("unreachable");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -17,7 +30,7 @@ Deno.serve(async (req) => {
     const { action, input, placeId } = await req.json();
 
     if (action === "autocomplete") {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         "https://places.googleapis.com/v1/places:autocomplete",
         {
           method: "POST",
@@ -40,7 +53,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === "details") {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         `https://places.googleapis.com/v1/places/${placeId}`,
         {
           headers: {
@@ -58,14 +71,15 @@ Deno.serve(async (req) => {
     }
 
     if (action === "geocode") {
-      const res = await fetch(
+      const res = await fetchWithRetry(
         "https://maps.googleapis.com/maps/api/geocode/json?" +
           new URLSearchParams({
             address: input,
             region: "IL",
             language: "he",
             key: GOOGLE_API_KEY,
-          })
+          }),
+        {}
       );
       const data = await res.json();
       const result = data.results?.[0];
