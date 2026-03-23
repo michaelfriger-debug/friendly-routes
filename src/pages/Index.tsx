@@ -56,10 +56,29 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number): numb
 
 async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
+    // Check cache first
+    const { data: cacheData } = await supabase
+      .from("geocode_cache")
+      .select("lat, lng")
+      .eq("address", address)
+      .single();
+
+    if (cacheData?.lat && cacheData?.lng) {
+      return { lat: cacheData.lat, lng: cacheData.lng };
+    }
+
     const { data, error } = await supabase.functions.invoke("google-places", {
       body: { action: "geocode", input: address },
     });
     if (error || !data?.lat || !data?.lng) return null;
+
+    // Save to cache
+    await supabase.from("geocode_cache").insert({
+      address,
+      lat: data.lat,
+      lng: data.lng,
+    });
+
     return { lat: data.lat, lng: data.lng };
   } catch {
     return null;
