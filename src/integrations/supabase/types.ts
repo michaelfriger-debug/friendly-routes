@@ -17,25 +17,37 @@ export type Database = {
       deliveries: {
         Row: {
           address: string
+          completed_at: string | null
           created_at: string
           customer_name: string
+          formatted_address: string | null
           id: string
+          lat: number | null
+          lng: number | null
           phone: string
           status: string
         }
         Insert: {
           address?: string
+          completed_at?: string | null
           created_at?: string
           customer_name?: string
+          formatted_address?: string | null
           id?: string
+          lat?: number | null
+          lng?: number | null
           phone?: string
           status?: string
         }
         Update: {
           address?: string
+          completed_at?: string | null
           created_at?: string
           customer_name?: string
+          formatted_address?: string | null
           id?: string
+          lat?: number | null
+          lng?: number | null
           phone?: string
           status?: string
         }
