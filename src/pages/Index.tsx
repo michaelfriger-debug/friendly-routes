@@ -154,6 +154,12 @@ const Index = () => {
     );
   }, []);
 
+  const handleCoordsResolved = useCallback((id: string, coords: { lat: number; lng: number }) => {
+    setStops((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, lat: coords.lat, lng: coords.lng } : s))
+    );
+  }, []);
+
   const handleReturn = useCallback((id: string) => {
     setStops((prev) => {
       const item = prev.find((s) => s.id === id);
