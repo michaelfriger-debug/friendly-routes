@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { PlaceSuggestion, PlaceDetails } from "@/types/delivery";
 import { supabase } from "@/integrations/supabase/client";
+import VoiceInput from "./VoiceInput";
 
 interface AddressInputProps {
   onAdd: (address: string, details?: PlaceDetails) => void;
