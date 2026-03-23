@@ -296,6 +296,7 @@ const Index = () => {
           onDeleteCompleted={() => setStops((prev) => prev.filter((s) => s.status !== "completed"))}
           onRestoreCompleted={(restored) => setStops((prev) => [...prev, ...restored])}
         />
+        <ThemeToggle />
       </div>
     </div>
   );
