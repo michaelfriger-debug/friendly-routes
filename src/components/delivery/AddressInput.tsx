@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { PlaceSuggestion, PlaceDetails } from "@/types/delivery";
 import { supabase } from "@/integrations/supabase/client";
+import VoiceInput from "./VoiceInput";
 
 interface AddressInputProps {
   onAdd: (address: string, details?: PlaceDetails) => void;
@@ -127,6 +128,7 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
             placeholder="הקלד כתובת משלוח..."
             className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
+          <VoiceInput onResult={(text) => { setValue(text); handleInputChange(text); }} />
           <button
             onClick={handleManualAdd}
             className="btn-primary min-w-[72px] text-lg"
