@@ -65,6 +65,8 @@
     --warning: 35 95% 55%;
     --warning-foreground: 0 0% 100%;
   }
+
+  * {
     box-sizing: border-box;
     border-color: hsl(var(--border));
   }
