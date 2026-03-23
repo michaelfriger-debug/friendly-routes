@@ -1,11 +1,35 @@
 import { supabase } from "@/integrations/supabase/client";
 
-async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
+async function geocodeWithCache(address: string): Promise<{ lat: number; lng: number } | null> {
   try {
+    // Step 1: Check cache
+    const { data: cacheData } = await supabase
+      .from("geocode_cache")
+      .select("lat, lng")
+      .eq("address", address)
+      .single();
+
+    if (cacheData?.lat && cacheData?.lng) {
+      console.log("Loaded from cache ✅");
+      return { lat: cacheData.lat, lng: cacheData.lng };
+    }
+
+    // Step 2: Fetch from edge function
+    console.log("Fetching from edge function...");
     const { data, error } = await supabase.functions.invoke("google-places", {
       body: { action: "geocode", input: address },
     });
+
     if (error || !data?.lat || !data?.lng) return null;
+
+    // Step 3: Save to cache
+    await supabase.from("geocode_cache").insert({
+      address,
+      lat: data.lat,
+      lng: data.lng,
+    });
+    console.log("Saved to cache 💾");
+
     return { lat: data.lat, lng: data.lng };
   } catch {
     return null;
@@ -22,16 +46,14 @@ export const handleNavigation = async (
     let targetLat = lat;
     let targetLng = lng;
 
-    // אם אין קואורדינטות - מביאים מגוגל דרך Edge Function
     if (targetLat == null || targetLng == null) {
-      const coords = await geocodeAddress(address);
+      const coords = await geocodeWithCache(address);
 
       if (coords) {
         targetLat = coords.lat;
         targetLng = coords.lng;
         onCoordsResolved?.(coords);
       } else {
-        // fallback לפי כתובת בלבד
         window.open(
           `https://www.waze.com/ul?q=${encodeURIComponent(address)}&navigate=yes`,
           "_blank"
@@ -40,7 +62,6 @@ export const handleNavigation = async (
       }
     }
 
-    // פתיחה ב-Waze עם קואורדינטות
     const appUrl = `waze://?ll=${targetLat},${targetLng}&navigate=yes`;
     const webUrl = `https://www.waze.com/ul?ll=${targetLat},${targetLng}&navigate=yes`;
 
