@@ -128,7 +128,7 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
             placeholder="הקלד כתובת משלוח..."
             className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <VoiceInput onResult={(text) => handleInputChange(text)} />
+          <VoiceInput onResult={(text) => { setValue(text); handleInputChange(text); }} />
           <button
             onClick={handleManualAdd}
             className="btn-primary min-w-[72px] text-lg"
