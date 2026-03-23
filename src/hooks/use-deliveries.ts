@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { DeliveryStop } from "@/types/delivery";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,76 +30,53 @@ function stopToRow(stop: DeliveryStop) {
   };
 }
 
+const DELIVERIES_KEY = ["deliveries"];
+
+async function fetchDeliveries(): Promise<DeliveryStop[]> {
+  const { data, error } = await supabase
+    .from("deliveries")
+    .select("*")
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    console.error("Failed to load deliveries:", error);
+    throw error;
+  }
+  return (data || []).map(rowToStop);
+}
+
 export function useDeliveries() {
-  const [stops, setStops] = useState<DeliveryStop[]>([]);
-  const [loaded, setLoaded] = useState(false);
+  const queryClient = useQueryClient();
 
-  // Initial fetch
-  useEffect(() => {
-    const fetchStops = async () => {
-      const { data, error } = await supabase
-        .from("deliveries")
-        .select("*")
-        .order("created_at", { ascending: true });
+  const { data: stops = [], isLoading } = useQuery({
+    queryKey: DELIVERIES_KEY,
+    queryFn: fetchDeliveries,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-      if (error) {
-        console.error("Failed to load deliveries:", error);
-        toast.error("שגיאה בטעינת משלוחים");
-      } else {
-        setStops((data || []).map(rowToStop));
-      }
-      setLoaded(true);
-    };
-    fetchStops();
-  }, []);
+  const loaded = !isLoading;
 
-  // Realtime subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel("deliveries-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "deliveries" },
-        (payload) => {
-          if (payload.eventType === "INSERT") {
-            const newStop = rowToStop(payload.new);
-            setStops((prev) => {
-              if (prev.some((s) => s.id === newStop.id)) return prev;
-              return [...prev, newStop];
-            });
-          } else if (payload.eventType === "UPDATE") {
-            const updated = rowToStop(payload.new);
-            setStops((prev) =>
-              prev.map((s) => (s.id === updated.id ? updated : s))
-            );
-          } else if (payload.eventType === "DELETE") {
-            const deletedId = (payload.old as any).id;
-            setStops((prev) => prev.filter((s) => s.id !== deletedId));
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const invalidate = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: DELIVERIES_KEY });
+  }, [queryClient]);
 
   const addStop = useCallback(async (stop: DeliveryStop) => {
     // Optimistic update
-    setStops((prev) => [...prev, stop]);
+    queryClient.setQueryData<DeliveryStop[]>(DELIVERIES_KEY, (old = []) => [...old, stop]);
 
     const { error } = await supabase.from("deliveries").insert(stopToRow(stop));
     if (error) {
       console.error("Insert error:", error);
       toast.error("שגיאה בשמירת משלוח");
-      setStops((prev) => prev.filter((s) => s.id !== stop.id));
     }
-  }, []);
+    invalidate();
+  }, [queryClient, invalidate]);
 
   const updateStop = useCallback(async (id: string, updates: Partial<DeliveryStop>) => {
-    setStops((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, ...updates } : s))
+    // Optimistic update
+    queryClient.setQueryData<DeliveryStop[]>(DELIVERIES_KEY, (old = []) =>
+      old.map((s) => (s.id === id ? { ...s, ...updates } : s))
     );
 
     const dbUpdates: any = {};
@@ -114,23 +92,26 @@ export function useDeliveries() {
       console.error("Update error:", error);
       toast.error("שגיאה בעדכון משלוח");
     }
-  }, []);
+    invalidate();
+  }, [queryClient, invalidate]);
 
   const replaceAll = useCallback(async (newStops: DeliveryStop[]) => {
-    setStops(newStops);
+    queryClient.setQueryData<DeliveryStop[]>(DELIVERIES_KEY, newStops);
 
-    // Batch upsert all stops
     const rows = newStops.map(stopToRow);
     const { error } = await supabase.from("deliveries").upsert(rows, { onConflict: "id" });
     if (error) {
       console.error("Upsert error:", error);
       toast.error("שגיאה בעדכון משלוחים");
     }
-  }, []);
+    invalidate();
+  }, [queryClient, invalidate]);
 
   const deleteCompleted = useCallback(async () => {
     const completedIds = stops.filter((s) => s.status === "completed").map((s) => s.id);
-    setStops((prev) => prev.filter((s) => s.status !== "completed"));
+    queryClient.setQueryData<DeliveryStop[]>(DELIVERIES_KEY, (old = []) =>
+      old.filter((s) => s.status !== "completed")
+    );
 
     if (completedIds.length > 0) {
       const { error } = await supabase.from("deliveries").delete().in("id", completedIds);
@@ -139,10 +120,11 @@ export function useDeliveries() {
         toast.error("שגיאה במחיקת משלוחים");
       }
     }
-  }, [stops]);
+    invalidate();
+  }, [stops, queryClient, invalidate]);
 
   const restoreStops = useCallback(async (restored: DeliveryStop[]) => {
-    setStops((prev) => [...prev, ...restored]);
+    queryClient.setQueryData<DeliveryStop[]>(DELIVERIES_KEY, (old = []) => [...old, ...restored]);
 
     const rows = restored.map(stopToRow);
     const { error } = await supabase.from("deliveries").insert(rows);
@@ -150,7 +132,8 @@ export function useDeliveries() {
       console.error("Restore error:", error);
       toast.error("שגיאה בשחזור משלוחים");
     }
-  }, []);
+    invalidate();
+  }, [queryClient, invalidate]);
 
-  return { stops, setStops, loaded, addStop, updateStop, replaceAll, deleteCompleted, restoreStops };
+  return { stops, loaded, addStop, updateStop, replaceAll, deleteCompleted, restoreStops };
 }
