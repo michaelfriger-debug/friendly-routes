@@ -6,6 +6,7 @@ import DeliveryList from "@/components/delivery/DeliveryList";
 import CompletedList from "@/components/delivery/CompletedList";
 import RouteConfigModal, { type RouteConfig } from "@/components/delivery/RouteConfigModal";
 import RouteSummary from "@/components/delivery/RouteSummary";
+import ThemeToggle from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -295,6 +296,7 @@ const Index = () => {
           onDeleteCompleted={() => setStops((prev) => prev.filter((s) => s.status !== "completed"))}
           onRestoreCompleted={(restored) => setStops((prev) => [...prev, ...restored])}
         />
+        <ThemeToggle />
       </div>
     </div>
   );

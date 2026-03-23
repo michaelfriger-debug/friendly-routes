@@ -40,7 +40,31 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
-  * {
+  .dark {
+    --background: 220 20% 12%;
+    --foreground: 210 20% 92%;
+    --card: 220 18% 16%;
+    --card-foreground: 210 20% 92%;
+    --popover: 220 18% 16%;
+    --popover-foreground: 210 20% 92%;
+    --primary: 210 90% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 145 60% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 15% 22%;
+    --muted-foreground: 210 10% 60%;
+    --accent: 35 95% 55%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 15% 24%;
+    --input: 220 15% 24%;
+    --ring: 210 90% 55%;
+    --success: 145 60% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 35 95% 55%;
+    --warning-foreground: 0 0% 100%;
+  }
     box-sizing: border-box;
     border-color: hsl(var(--border));
   }
@@ -130,5 +154,34 @@
 
   .btn-outline:hover {
     background-color: hsl(var(--muted));
+  }
+
+  .theme-btn {
+    position: fixed;
+    bottom: 15px;
+    left: 15px;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    z-index: 50;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .theme-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  .theme-btn:active {
+    transform: scale(0.95);
   }
 }
