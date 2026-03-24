@@ -118,7 +118,7 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
     <div className="delivery-card animate-slide-in" ref={wrapperRef}>
       <h3 className="text-sm font-semibold text-muted-foreground mb-3">📦 כתובת משלוח</h3>
       <div className="relative">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1.5" dir="rtl">
           <button
             onClick={handleManualAdd}
             className="h-11 px-3 text-sm btn-primary rounded-xl"
