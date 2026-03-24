@@ -118,7 +118,15 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
     <div className="delivery-card animate-slide-in" ref={wrapperRef}>
       <h3 className="text-sm font-semibold text-muted-foreground mb-3">📦 כתובת משלוח</h3>
       <div className="relative">
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={handleManualAdd}
+            className="h-11 px-3 text-sm btn-primary rounded-xl"
+            disabled={loading}
+          >
+            {loading ? "..." : "+ הוסף"}
+          </button>
+          <VoiceInput onResult={(text) => { setValue(text); handleInputChange(text); }} />
           <input
             type="text"
             value={value}
@@ -126,16 +134,8 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
             onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
             placeholder="הקלד כתובת משלוח..."
-            className="flex-1 rounded-xl border border-input bg-background px-4 py-3 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <VoiceInput onResult={(text) => { setValue(text); handleInputChange(text); }} />
-          <button
-            onClick={handleManualAdd}
-            className="btn-primary min-w-[72px] text-lg"
-            disabled={loading}
-          >
-            {loading ? "..." : "+ הוסף"}
-          </button>
         </div>
 
         {/* Autocomplete dropdown */}
