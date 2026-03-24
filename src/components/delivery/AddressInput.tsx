@@ -130,12 +130,13 @@ const AddressInput = ({ onAdd }: AddressInputProps) => {
           <input
             type="text"
             dir="rtl"
+            style={{ direction: "rtl", textAlign: "right" }}
             value={value}
             onChange={(e) => handleInputChange(e.target.value)}
             onKeyDown={handleKeyDown}
             onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
             placeholder="הקלד כתובת משלוח..."
-            className="h-11 flex-1 rounded-xl border border-input bg-background px-3 text-right text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="h-11 flex-1 px-3 bg-muted rounded-lg outline-none text-sm text-right placeholder:text-right placeholder:text-muted-foreground"
           />
         </div>
 
