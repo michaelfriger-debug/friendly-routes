@@ -36,8 +36,9 @@ const Login = () => {
     setLoading(true);
     setError("");
 
+    const fullEmail = email.includes("@") ? email : `${email}@local.delivery`;
     const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
+      email: fullEmail,
       password,
     });
 
@@ -98,8 +99,8 @@ const Login = () => {
 
         <div className="space-y-4">
           <Input
-            placeholder="אימייל"
-            type="email"
+            placeholder="שם משתמש"
+            type="text"
             value={email}
             onChange={(e) => { setEmail(e.target.value); setError(""); }}
             dir="rtl"
