@@ -10,6 +10,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useDeliveries } from "@/hooks/use-deliveries";
+import { useQuota } from "@/hooks/use-quota";
+import { logActivity } from "@/lib/activity-log";
 
 const ROUTE_CONFIG_KEY = "michael-route-config";
 
@@ -89,6 +91,7 @@ const Index = () => {
   const [routeConfig, setRouteConfig] = useState<RouteConfig>(loadRouteConfig);
   const [sorting, setSorting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const quota = useQuota();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -121,7 +124,14 @@ const Index = () => {
     );
   }, []);
 
-  const handleAdd = useCallback((address: string, details?: PlaceDetails) => {
+  const handleAdd = useCallback(async (address: string, details?: PlaceDetails) => {
+    // Check quota
+    const { allowed, message } = await quota.checkAndIncrement();
+    if (!allowed) {
+      toast.error(message || "חריגה ממכסה");
+      return;
+    }
+
     const stopId = crypto.randomUUID();
     const newStop: DeliveryStop = {
       id: stopId,
@@ -133,6 +143,7 @@ const Index = () => {
     };
 
     addStop(newStop);
+    logActivity("add_delivery", { address });
 
     // Auto-geocode if no coordinates
     if (newStop.lat == null || newStop.lng == null) {
@@ -146,6 +157,8 @@ const Index = () => {
 
   const handleComplete = useCallback((id: string) => {
     const completedAt = new Date().toISOString();
+    const stop = stops.find((s) => s.id === id);
+    if (stop) logActivity("complete_delivery", { address: stop.address });
     updateStop(id, { status: "completed", completedAt });
 
     // Activate next pending
@@ -245,7 +258,14 @@ const Index = () => {
     <div className="min-h-screen bg-background pb-24">
       <header className="bg-card shadow-sm sticky top-0 z-20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
-          <h1 className="text-xl font-bold">🚚 Michael Delivery</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold">🚚 Michael Delivery</h1>
+            {!quota.loading && (
+              <span className={`text-xs font-medium ${quota.color}`}>
+                נקודות: {quota.pointsUsed}/{quota.pointsLimit}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             {isAdmin && (
               <a

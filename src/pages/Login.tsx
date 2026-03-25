@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { logActivity } from "@/lib/activity-log";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -85,6 +86,7 @@ const Login = () => {
       localStorage.removeItem("savedCredentials");
     }
 
+    logActivity("login");
     setLoading(false);
     navigate("/");
   };
