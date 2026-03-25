@@ -246,12 +246,22 @@ const Index = () => {
       <header className="bg-card shadow-sm sticky top-0 z-20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-bold">🚚 Michael Delivery</h1>
-          <button
-            onClick={() => { localStorage.removeItem("isLoggedIn"); window.location.href = "/login"; }}
-            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-          >
-            התנתק
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <a
+                href="/admin"
+                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors"
+              >
+                ניהול
+              </a>
+            )}
+            <button
+              onClick={() => { localStorage.removeItem("isLoggedIn"); window.location.href = "/login"; }}
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              התנתק
+            </button>
+          </div>
         </div>
       </header>
 
