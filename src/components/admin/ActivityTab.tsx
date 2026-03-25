@@ -29,6 +29,8 @@ const ACTION_LABELS: Record<string, string> = {
   complete_delivery: "✅ סיים משלוח",
   delete_delivery: "🗑️ מחק כתובת",
   quota_warning: "⚠️ חריגת מכסה (80%)",
+  login_failed: "🚫 כישלון התחברות",
+  error: "❌ שגיאה",
 };
 
 const ActivityTab = () => {
@@ -42,6 +44,23 @@ const ActivityTab = () => {
 
   useEffect(() => {
     fetchData();
+
+    // Realtime subscription for new activity
+    const channel = supabase
+      .channel("admin-activity")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "activity_log" },
+        (payload) => {
+          const newRow = payload.new as ActivityRow;
+          setLogs((prev) => [newRow, ...prev]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -64,8 +83,9 @@ const ActivityTab = () => {
   const filtered = useMemo(() => {
     return logs.filter((l) => {
       if (selectedUser !== "all" && l.user_id !== selectedUser) return false;
-      if (actionFilter === "logins" && l.action_type !== "login") return false;
-      if (actionFilter === "deliveries" && l.action_type === "login") return false;
+      if (actionFilter === "logins" && l.action_type !== "login" && l.action_type !== "login_failed") return false;
+      if (actionFilter === "deliveries" && !["add_delivery", "complete_delivery", "delete_delivery"].includes(l.action_type)) return false;
+      if (actionFilter === "errors" && !["login_failed", "error", "quota_warning"].includes(l.action_type)) return false;
       if (dateFrom && l.created_at < dateFrom) return false;
       if (dateTo) {
         const to = new Date(dateTo);
@@ -82,7 +102,7 @@ const ActivityTab = () => {
     });
 
   const exportCSV = () => {
-    const header = "תאריך,נהג,פעולה,כתובת,שם לקוח\n";
+    const header = "תאריך,נהג,פעולה,כתובת,שם לקוח,פרטי שגיאה\n";
     const rows = filtered.map((l) => {
       const details = l.details || {};
       return [
@@ -91,6 +111,7 @@ const ActivityTab = () => {
         ACTION_LABELS[l.action_type] || l.action_type,
         details.address || "",
         details.customer_name || "",
+        details.reason || details.error || "",
       ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",");
     }).join("\n");
 
@@ -103,10 +124,16 @@ const ActivityTab = () => {
     URL.revokeObjectURL(url);
   };
 
+  const getRowColor = (actionType: string) => {
+    if (["login_failed", "error"].includes(actionType)) return "bg-destructive/10";
+    if (actionType === "quota_warning") return "bg-orange-500/10";
+    return "";
+  };
+
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <Select value={selectedUser} onValueChange={setSelectedUser}>
           <SelectTrigger><SelectValue placeholder="נהג" /></SelectTrigger>
           <SelectContent>
@@ -123,18 +150,21 @@ const ActivityTab = () => {
             <SelectItem value="all">הכל</SelectItem>
             <SelectItem value="logins">התחברויות</SelectItem>
             <SelectItem value="deliveries">משלוחים</SelectItem>
+            <SelectItem value="errors">שגיאות</SelectItem>
           </SelectContent>
         </Select>
 
         <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="מתאריך" />
         <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="עד תאריך" />
+
+        <Button variant="outline" size="sm" onClick={exportCSV} className="h-10">
+          <Download className="h-3 w-3 ml-1" /> ייצא CSV
+        </Button>
       </div>
 
       <div className="flex justify-between items-center">
         <span className="text-sm text-muted-foreground">{filtered.length} רשומות</span>
-        <Button variant="outline" size="sm" onClick={exportCSV}>
-          <Download className="h-3 w-3 ml-1" /> ייצא CSV
-        </Button>
+        <span className="text-xs text-green-600 animate-pulse">● מתעדכן בזמן אמת</span>
       </div>
 
       {loading ? (
@@ -152,13 +182,16 @@ const ActivityTab = () => {
             </TableHeader>
             <TableBody>
               {filtered.map((l) => (
-                <TableRow key={l.id}>
+                <TableRow key={l.id} className={getRowColor(l.action_type)}>
                   <TableCell className="text-sm">{formatDate(l.created_at)}</TableCell>
                   <TableCell className="text-sm">{l.user_id ? userMap[l.user_id] || "—" : "—"}</TableCell>
                   <TableCell className="text-sm">{ACTION_LABELS[l.action_type] || l.action_type}</TableCell>
                   <TableCell className="text-sm text-muted-foreground">
                     {l.details?.address || ""}
                     {l.details?.customer_name ? ` (${l.details.customer_name})` : ""}
+                    {l.details?.reason ? ` — ${l.details.reason}` : ""}
+                    {l.details?.email ? ` [${l.details.email}]` : ""}
+                    {l.details?.error ? ` — ${l.details.error}` : ""}
                   </TableCell>
                 </TableRow>
               ))}

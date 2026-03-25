@@ -33,9 +33,13 @@ function stopToRow(stop: DeliveryStop) {
 const DELIVERIES_KEY = ["deliveries"];
 
 async function fetchDeliveries(): Promise<DeliveryStop[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
   const { data, error } = await supabase
     .from("deliveries")
     .select("*")
+    .eq("user_id", user.id)
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -65,7 +69,9 @@ export function useDeliveries() {
     // Optimistic update
     queryClient.setQueryData<DeliveryStop[]>(DELIVERIES_KEY, (old = []) => [...old, stop]);
 
-    const { error } = await supabase.from("deliveries").insert(stopToRow(stop));
+    const { data: { user } } = await supabase.auth.getUser();
+    const row = { ...stopToRow(stop), user_id: user?.id || null };
+    const { error } = await supabase.from("deliveries").insert(row);
     if (error) {
       console.error("Insert error:", error);
       toast.error("שגיאה בשמירת משלוח");
