@@ -32,43 +32,6 @@ const Login = () => {
     });
   }, [navigate]);
 
-  const syncUserToDb = async (user: { id: string; email: string | undefined }) => {
-    console.log("USER LOGGED IN - id:", user.id, "email:", user.email);
-
-    try {
-      // Check if user exists
-      const { data: existing, error: selectError } = await supabase
-        .from("users")
-        .select("id")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      console.log("Fetch user result:", { existing, selectError });
-
-      if (!existing) {
-        // Insert new user
-        const { data: insertData, error: insertError } = await supabase.from("users").insert({
-          id: user.id,
-          email: user.email ?? null,
-          role: "courier",
-          last_login: new Date().toISOString(),
-        });
-        console.log("Insert user result:", { insertData, insertError });
-        if (insertError) console.error("Insert error:", insertError);
-      } else {
-        // Update last_login
-        const { error: updateError } = await supabase
-          .from("users")
-          .update({ last_login: new Date().toISOString() })
-          .eq("id", user.id);
-        console.log("Update last_login result:", { updateError });
-        if (updateError) console.error("Update error:", updateError);
-      }
-    } catch (err) {
-      console.error("Failed to sync user:", err);
-    }
-  };
-
   const handleLogin = async () => {
     setLoading(true);
     setError("");
@@ -85,21 +48,35 @@ const Login = () => {
       return;
     }
 
-    console.log("AUTH SUCCESS - user:", data.user.id);
+    console.log("LOGIN SUCCESS", data.user);
 
-    // Wait for session to be fully available
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    console.log("SESSION DATA:", { session: sessionData.session, sessionError });
+    const user = data.user;
 
-    if (!sessionData.session) {
-      console.error("No session available after login");
-      setError("שגיאה בהתחברות - אין סשן");
-      setLoading(false);
-      return;
+    const { data: existingUser, error: fetchError } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    console.log("FETCH RESULT:", existingUser, fetchError);
+
+    if (!existingUser) {
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert({
+          id: user.id,
+          email: user.email,
+          role: "courier"
+        });
+      console.log("INSERT RESULT:", insertError);
     }
 
-    // Sync user to users table using authenticated session
-    await syncUserToDb({ id: data.user.id, email: data.user.email });
+    await supabase
+      .from("users")
+      .update({ last_login: new Date() })
+      .eq("id", user.id);
+
+    console.log("UPDATE DONE");
 
     if (rememberMe) {
       localStorage.setItem("savedCredentials", JSON.stringify({ email, password }));
