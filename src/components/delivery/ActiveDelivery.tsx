@@ -1,5 +1,6 @@
 import type { DeliveryStop } from "@/types/delivery";
 import { handleNavigation } from "@/lib/navigation";
+import confetti from "canvas-confetti";
 
 interface ActiveDeliveryProps {
   stop: DeliveryStop;
@@ -14,6 +15,11 @@ const ActiveDelivery = ({ stop, onComplete, onCoordsResolved }: ActiveDeliveryPr
     });
   };
 
+  const handleDelivered = () => {
+    confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } });
+    onComplete(stop.id);
+  };
+
   return (
     <div className="delivery-card border-2 border-primary/30 bg-primary/5 animate-slide-in">
       <div className="flex items-center gap-2 mb-3">
@@ -25,7 +31,7 @@ const ActiveDelivery = ({ stop, onComplete, onCoordsResolved }: ActiveDeliveryPr
         <button onClick={navigate} className="btn-primary flex-1 text-center">
           🧭 נווט ב-Waze
         </button>
-        <button onClick={() => onComplete(stop.id)} className="btn-success flex-1">
+        <button onClick={handleDelivered} className="btn-success flex-1">
           👍 סופק
         </button>
       </div>
