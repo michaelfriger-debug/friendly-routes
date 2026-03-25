@@ -286,6 +286,22 @@ const Admin = () => {
             onUpdated={fetchUsers}
           />
         )}
+
+        {resetUser && (
+          <ResetPasswordDialog
+            open={!!resetUser}
+            onClose={() => setResetUser(null)}
+            userId={resetUser.id}
+            userName={resetUser.name}
+          />
+        )}
+
+        <TransferDataDialog
+          open={showTransfer}
+          onClose={() => setShowTransfer(false)}
+          users={users}
+          onTransferred={fetchUsers}
+        />
       </div>
     </div>
   );
