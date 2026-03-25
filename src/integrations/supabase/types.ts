@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_log: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       deliveries: {
         Row: {
           address: string
@@ -88,6 +120,9 @@ export type Database = {
           is_active: boolean | null
           last_login: string | null
           name: string | null
+          points_limit: number | null
+          points_used_this_month: number | null
+          quota_reset_date: string | null
           role: string | null
         }
         Insert: {
@@ -97,6 +132,9 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           name?: string | null
+          points_limit?: number | null
+          points_used_this_month?: number | null
+          quota_reset_date?: string | null
           role?: string | null
         }
         Update: {
@@ -106,6 +144,9 @@ export type Database = {
           is_active?: boolean | null
           last_login?: string | null
           name?: string | null
+          points_limit?: number | null
+          points_used_this_month?: number | null
+          quota_reset_date?: string | null
           role?: string | null
         }
         Relationships: []
