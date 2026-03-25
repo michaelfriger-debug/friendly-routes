@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { DeliveryStop, PlaceDetails } from "@/types/delivery";
 import AddressInput from "@/components/delivery/AddressInput";
 import ActiveDelivery from "@/components/delivery/ActiveDelivery";
@@ -88,6 +88,16 @@ const Index = () => {
   const { stops, loaded, addStop, updateStop, replaceAll, deleteCompleted, restoreStops } = useDeliveries();
   const [routeConfig, setRouteConfig] = useState<RouteConfig>(loadRouteConfig);
   const [sorting, setSorting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("users").select("role").eq("id", user.id).maybeSingle().then(({ data }) => {
+        if (data?.role === "admin") setIsAdmin(true);
+      });
+    });
+  }, []);
 
   // Persist route config to localStorage
   const handleRouteConfigSave = useCallback((config: RouteConfig) => {
@@ -236,12 +246,22 @@ const Index = () => {
       <header className="bg-card shadow-sm sticky top-0 z-20">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-xl font-bold">🚚 Michael Delivery</h1>
-          <button
-            onClick={() => { localStorage.removeItem("isLoggedIn"); window.location.href = "/login"; }}
-            className="text-xs text-muted-foreground hover:text-destructive transition-colors"
-          >
-            התנתק
-          </button>
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <a
+                href="/admin"
+                className="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20 transition-colors"
+              >
+                ניהול
+              </a>
+            )}
+            <button
+              onClick={() => { localStorage.removeItem("isLoggedIn"); window.location.href = "/login"; }}
+              className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+            >
+              התנתק
+            </button>
+          </div>
         </div>
       </header>
 
