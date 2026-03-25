@@ -104,12 +104,30 @@ export function useQuota() {
     }
 
     // Increment
+    const newUsed = currentUsed + 1;
     await supabase
       .from("users")
-      .update({ points_used_this_month: currentUsed + 1 })
+      .update({ points_used_this_month: newUsed })
       .eq("id", user.id);
 
-    setQuota((q) => ({ ...q, pointsUsed: currentUsed + 1 }));
+    // Notify admins when driver reaches 80% quota
+    const pct = (newUsed / limit) * 100;
+    if (pct >= 80 && ((currentUsed / limit) * 100) < 80) {
+      // Just crossed the 80% threshold
+      const { data: userData } = await supabase
+        .from("users")
+        .select("name")
+        .eq("id", user.id)
+        .maybeSingle();
+      const driverName = userData?.name || user.email || "נהג";
+      await supabase.from("activity_log").insert({
+        user_id: user.id,
+        action_type: "quota_warning",
+        details: { driver_name: driverName, used: newUsed, limit, percent: Math.round(pct) },
+      });
+    }
+
+    setQuota((q) => ({ ...q, pointsUsed: newUsed }));
     return { allowed: true };
   }, []);
 
