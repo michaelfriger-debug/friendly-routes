@@ -16,9 +16,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Shield, Truck, Ban, CheckCircle, Trash2, UserPlus, Settings, RotateCcw } from "lucide-react";
+import { ArrowRight, Shield, Truck, Ban, CheckCircle, Trash2, UserPlus, Settings, RotateCcw, Key, ArrowLeftRight } from "lucide-react";
 import QuotaDialog from "@/components/admin/QuotaDialog";
 import ActivityTab from "@/components/admin/ActivityTab";
+import ResetPasswordDialog from "@/components/admin/ResetPasswordDialog";
+import TransferDataDialog from "@/components/admin/TransferDataDialog";
 
 interface UserRow {
   id: string;
@@ -46,6 +48,8 @@ const Admin = () => {
   const [creating, setCreating] = useState(false);
 
   const [quotaUser, setQuotaUser] = useState<UserRow | null>(null);
+  const [resetUser, setResetUser] = useState<UserRow | null>(null);
+  const [showTransfer, setShowTransfer] = useState(false);
 
   useEffect(() => { checkAdminAndLoad(); }, []);
 
@@ -130,9 +134,14 @@ const Admin = () => {
       <div className="max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-foreground">🛡️ פאנל ניהול</h1>
-          <Button variant="outline" onClick={() => navigate("/")}>
-            <ArrowRight className="h-4 w-4 ml-2" />חזור לדף הראשי
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowTransfer(true)}>
+              <ArrowLeftRight className="h-4 w-4 ml-1" />העבר נתונים
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/")}>
+              <ArrowRight className="h-4 w-4 ml-2" />חזור לדף הראשי
+            </Button>
+          </div>
         </div>
 
         <Tabs defaultValue="manage" className="w-full">
@@ -197,6 +206,9 @@ const Admin = () => {
                               </Button>
                               <Button size="sm" variant="outline" onClick={() => resetQuota(u)} className="text-xs">
                                 <RotateCcw className="h-3 w-3 ml-1" />אפס חודש
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => setResetUser(u)} className="text-xs">
+                                <Key className="h-3 w-3 ml-1" />אפס סיסמה
                               </Button>
                               <AlertDialog>
                                 <AlertDialogTrigger asChild>
