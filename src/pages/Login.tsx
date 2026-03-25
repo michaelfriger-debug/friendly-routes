@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const VALID_USERS = [
   { username: "Shlomi", password: "Shlomi" },
@@ -28,17 +29,46 @@ const Login = () => {
     }
   }, []);
 
-  const handleLogin = () => {
+  const syncUserToDb = async (name: string) => {
+    try {
+      const { data: existing } = await supabase
+        .from("users")
+        .select("id")
+        .eq("name", name)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("users")
+          .update({ last_login: new Date().toISOString() })
+          .eq("id", existing.id);
+      } else {
+        await supabase.from("users").insert({
+          id: crypto.randomUUID(),
+          name,
+          email: `${name.toLowerCase()}@michael.delivery`,
+          role: "courier",
+          last_login: new Date().toISOString(),
+        });
+      }
+    } catch (err) {
+      console.error("Failed to sync user:", err);
+    }
+  };
+
+  const handleLogin = async () => {
     const valid = VALID_USERS.some(
       (u) => u.username === username && u.password === password
     );
     if (valid) {
       localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("currentUser", username);
       if (rememberMe) {
         localStorage.setItem("savedCredentials", JSON.stringify({ username, password }));
       } else {
         localStorage.removeItem("savedCredentials");
       }
+      await syncUserToDb(username);
       navigate("/");
     } else {
       setError("שם משתמש או סיסמה שגויים");
