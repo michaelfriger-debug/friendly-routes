@@ -28,6 +28,7 @@ const ACTION_LABELS: Record<string, string> = {
   add_delivery: "➕ הוסיף כתובת",
   complete_delivery: "✅ סיים משלוח",
   delete_delivery: "🗑️ מחק כתובת",
+  quota_warning: "⚠️ חריגת מכסה (80%)",
 };
 
 const ActivityTab = () => {
