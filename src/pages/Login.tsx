@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const VALID_USERS = [
   { username: "Shlomi", password: "Shlomi" },
