@@ -87,7 +87,18 @@ const Login = () => {
 
     console.log("AUTH SUCCESS - user:", data.user.id);
 
-    // Sync user to users table immediately
+    // Wait for session to be fully available
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    console.log("SESSION DATA:", { session: sessionData.session, sessionError });
+
+    if (!sessionData.session) {
+      console.error("No session available after login");
+      setError("שגיאה בהתחברות - אין סשן");
+      setLoading(false);
+      return;
+    }
+
+    // Sync user to users table using authenticated session
     await syncUserToDb({ id: data.user.id, email: data.user.email });
 
     if (rememberMe) {
