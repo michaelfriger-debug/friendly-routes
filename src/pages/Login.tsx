@@ -73,7 +73,7 @@ const Login = () => {
 
     await supabase
       .from("users")
-      .update({ last_login: new Date() })
+      .update({ last_login: new Date().toISOString() })
       .eq("id", user.id);
 
     console.log("UPDATE DONE");
