@@ -1,5 +1,6 @@
 import type { DeliveryStop } from "@/types/delivery";
 import { handleNavigation } from "@/lib/navigation";
+import confetti from "canvas-confetti";
 
 interface ActiveDeliveryProps {
   stop: DeliveryStop;
