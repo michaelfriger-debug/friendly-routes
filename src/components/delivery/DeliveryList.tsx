@@ -64,7 +64,7 @@ const DeliveryList = ({ stops, onComplete, onEdit, onCoordsResolved }: DeliveryL
                 📍 נווט לכתובת
               </button>
               <div className="flex gap-2">
-                <button onClick={() => onComplete(stop.id)} className="btn-success flex-1">
+                <button onClick={() => { confetti({ particleCount: 120, spread: 80, origin: { y: 0.7 } }); onComplete(stop.id); }} className="btn-success flex-1">
                   👍 סופק
                 </button>
                 <button onClick={() => startEdit(stop)} className="btn-outline flex-1">
