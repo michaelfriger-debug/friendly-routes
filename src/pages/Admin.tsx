@@ -21,6 +21,7 @@ import QuotaDialog from "@/components/admin/QuotaDialog";
 import ActivityTab from "@/components/admin/ActivityTab";
 import ResetPasswordDialog from "@/components/admin/ResetPasswordDialog";
 import TransferDataDialog from "@/components/admin/TransferDataDialog";
+import CacheStatsCard from "@/components/admin/CacheStatsCard";
 
 interface UserRow {
   id: string;
@@ -143,6 +144,8 @@ const Admin = () => {
             </Button>
           </div>
         </div>
+
+        <CacheStatsCard />
 
         <Tabs defaultValue="manage" className="w-full">
           <TabsList className="w-full grid grid-cols-3 mb-6">
