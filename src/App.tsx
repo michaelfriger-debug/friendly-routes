@@ -11,6 +11,42 @@ import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
 
+const syncUserOnLoad = async () => {
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  console.log("APP LOAD - getUser:", user, userError);
+
+  if (!user) {
+    console.log("APP LOAD - No user logged in");
+    return;
+  }
+
+  const { data: existingUser, error: fetchError } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  console.log("APP LOAD - FETCH RESULT:", existingUser, fetchError);
+
+  if (!existingUser) {
+    const { error: insertError } = await supabase
+      .from("users")
+      .insert({
+        id: user.id,
+        email: user.email,
+        role: "courier"
+      });
+    console.log("APP LOAD - INSERT RESULT:", insertError);
+  }
+
+  await supabase
+    .from("users")
+    .update({ last_login: new Date().toISOString() })
+    .eq("id", user.id);
+
+  console.log("APP LOAD - UPDATE DONE");
+};
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
@@ -21,9 +57,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setAuthenticated(!!session);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setAuthenticated(!!user);
       setLoading(false);
+      if (user) syncUserOnLoad();
     });
 
     return () => subscription.unsubscribe();
