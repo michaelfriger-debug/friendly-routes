@@ -62,6 +62,7 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     });
     if (error || !data?.lat || !data?.lng) return null;
 
+    console.log("cache miss, saving:", address);
     await supabase.from("geocode_cache").insert({
       address,
       lat: data.lat,
