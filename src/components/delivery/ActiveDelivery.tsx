@@ -31,7 +31,7 @@ const ActiveDelivery = ({ stop, onComplete, onCoordsResolved }: ActiveDeliveryPr
         <button onClick={navigate} className="btn-primary flex-1 text-center">
           🧭 נווט ב-Waze
         </button>
-        <button onClick={() => onComplete(stop.id)} className="btn-success flex-1">
+        <button onClick={handleDelivered} className="btn-success flex-1">
           👍 סופק
         </button>
       </div>
