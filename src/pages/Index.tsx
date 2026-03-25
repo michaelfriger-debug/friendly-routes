@@ -276,7 +276,7 @@ const Index = () => {
               </a>
             )}
             <button
-              onClick={() => { localStorage.removeItem("isLoggedIn"); window.location.href = "/login"; }}
+              onClick={async () => { await supabase.auth.signOut(); window.location.href = "/login"; }}
               className="text-xs text-muted-foreground hover:text-destructive transition-colors"
             >
               התנתק
