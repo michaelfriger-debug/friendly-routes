@@ -88,6 +88,16 @@ const Index = () => {
   const { stops, loaded, addStop, updateStop, replaceAll, deleteCompleted, restoreStops } = useDeliveries();
   const [routeConfig, setRouteConfig] = useState<RouteConfig>(loadRouteConfig);
   const [sorting, setSorting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("users").select("role").eq("id", user.id).maybeSingle().then(({ data }) => {
+        if (data?.role === "admin") setIsAdmin(true);
+      });
+    });
+  }, []);
 
   // Persist route config to localStorage
   const handleRouteConfigSave = useCallback((config: RouteConfig) => {
