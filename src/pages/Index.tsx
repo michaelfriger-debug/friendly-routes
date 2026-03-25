@@ -48,10 +48,12 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     const { data: cacheData } = await supabase
       .from("geocode_cache")
       .select("lat, lng")
-      .eq("address", address)
-      .single();
+      .ilike("address", address)
+      .limit(1)
+      .maybeSingle();
 
     if (cacheData?.lat && cacheData?.lng) {
+      console.log("cache hit:", address);
       return { lat: cacheData.lat, lng: cacheData.lng };
     }
 
@@ -60,6 +62,7 @@ async function geocodeAddress(address: string): Promise<{ lat: number; lng: numb
     });
     if (error || !data?.lat || !data?.lng) return null;
 
+    console.log("cache miss, saving:", address);
     await supabase.from("geocode_cache").insert({
       address,
       lat: data.lat,
