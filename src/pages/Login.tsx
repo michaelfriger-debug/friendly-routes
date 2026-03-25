@@ -30,12 +30,19 @@ const Login = () => {
   }, []);
 
   const syncUserToDb = async (name: string) => {
+    const userId = crypto.randomUUID();
+    const userObj = { id: userId, name, email: `${name.toLowerCase()}@michael.delivery` };
+    console.log("USER LOGGED IN:", userObj);
+
     try {
-      const { data: existing } = await supabase
+      // Fetch user from "users" table by name
+      const { data: existing, error: selectError } = await supabase
         .from("users")
-        .select("id")
+        .select("*")
         .eq("name", name)
         .maybeSingle();
+
+      console.log("Fetch user result:", { existing, selectError });
 
       if (existing) {
         await supabase
@@ -43,13 +50,14 @@ const Login = () => {
           .update({ last_login: new Date().toISOString() })
           .eq("id", existing.id);
       } else {
-        await supabase.from("users").insert({
-          id: crypto.randomUUID(),
+        const { error: insertError } = await supabase.from("users").insert({
+          id: userId,
           name,
           email: `${name.toLowerCase()}@michael.delivery`,
           role: "courier",
           last_login: new Date().toISOString(),
         });
+        console.log("Insert user result:", { insertError });
       }
     } catch (err) {
       console.error("Failed to sync user:", err);
