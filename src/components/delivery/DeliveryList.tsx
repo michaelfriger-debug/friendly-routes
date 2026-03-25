@@ -1,6 +1,7 @@
 import type { DeliveryStop } from "@/types/delivery";
 import { useState } from "react";
 import { handleNavigation } from "@/lib/navigation";
+import confetti from "canvas-confetti";
 
 interface DeliveryListProps {
   stops: DeliveryStop[];
