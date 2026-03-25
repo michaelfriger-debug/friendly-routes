@@ -46,6 +46,7 @@ const Login = () => {
     if (authError || !data.user) {
       console.error("Auth error:", authError);
       setError("אימייל או סיסמה שגויים");
+      logActivity("login_failed", { email: fullEmail, reason: authError?.message || "unknown" });
       setLoading(false);
       return;
     }
