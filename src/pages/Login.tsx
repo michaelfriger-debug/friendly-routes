@@ -96,7 +96,7 @@ const Login = () => {
     <div className="min-h-screen bg-background flex items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">🚚 Michael Delivery</h1>
+          <h1 className="text-2xl font-bold">🚚 Droppy</h1>
           <p className="text-muted-foreground mt-1">התחבר כדי להמשיך</p>
         </div>
 
