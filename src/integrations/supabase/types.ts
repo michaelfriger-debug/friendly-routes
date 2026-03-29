@@ -112,6 +112,36 @@ export type Database = {
         }
         Relationships: []
       }
+      drivers: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          phone: string
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id: string
+          phone?: string
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          phone?: string
+          status?: string
+        }
+        Relationships: []
+      }
       geocode_cache: {
         Row: {
           address: string
@@ -180,7 +210,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
