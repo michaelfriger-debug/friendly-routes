@@ -7,7 +7,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Index from "./pages/Index.tsx";
 import Login from "./pages/Login.tsx";
+import Register from "./pages/Register.tsx";
 import Admin from "./pages/Admin.tsx";
+import AdminDrivers from "./pages/AdminDrivers.tsx";
 import Dashboard from "./pages/Dashboard.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -52,16 +54,44 @@ const syncUserOnLoad = async () => {
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [driverBlocked, setDriverBlocked] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setAuthenticated(!!session);
+    const checkAuth = async (userId: string | undefined) => {
+      if (!userId) {
+        setAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
+      // Check driver status - block pending/rejected
+      const { data: driverData } = await supabase
+        .from("drivers")
+        .select("status")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (driverData && (driverData.status === "pending" || driverData.status === "rejected")) {
+        await supabase.auth.signOut();
+        setDriverBlocked(true);
+        setAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
+      setAuthenticated(true);
       setLoading(false);
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setAuthenticated(false);
+        setLoading(false);
+      }
     });
 
     supabase.auth.getUser().then(({ data: { user } }) => {
-      setAuthenticated(!!user);
-      setLoading(false);
+      checkAuth(user?.id);
       if (user) syncUserOnLoad();
     });
 
@@ -69,7 +99,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (loading) return null;
-  if (!authenticated) return <Navigate to="/login" replace />;
+  if (driverBlocked || !authenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 };
 
@@ -81,6 +111,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/admin/drivers" element={<ProtectedRoute><AdminDrivers /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
